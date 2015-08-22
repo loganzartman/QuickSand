@@ -1,0 +1,110 @@
+{
+	"properties": [
+		"solid",
+		"physics",
+		"liquid",
+		"density",
+		"vmax",
+		"life",
+		"flammable",
+		"r", "g", "b"
+	],
+	"types": {
+		"air": {
+			"solid": false,
+			"physics": false,
+			"liquid": false,
+			"density": 0,
+			"vmax": 0,
+			"flammable": false,
+			"life": 0,
+			"r": 255,
+			"g": 255,
+			"b": 255
+		},
+		"sand": {
+			"solid": true,
+			"physics": true,
+			"liquid": false,
+			"density": 76,
+			"vmax": 5,
+			"life": 0,
+			"flammable": false,
+			"r": 200,
+			"g": 160,
+			"b": 50
+		},
+		"doot!": {
+			"solid": true,
+			"physics": true,
+			"liquid": false,
+			"density": 100,
+			"vmax": 10,
+			"life": 0,
+			"flammable": false,
+			"r": 0,
+			"g": 0,
+			"b": 0
+		},
+		"silt": {
+			"solid": true,
+			"physics": true,
+			"liquid": false,
+			"density": 64,
+			"vmax": 3,
+			"life": 0,
+			"flammable": false,
+			"r": 250,
+			"g": 210,
+			"b": 100
+		},
+		"water": {
+			"solid": true,
+			"physics": true,
+			"liquid": true,
+			"density": 50,
+			"vmax": 5,
+			"life": 0,
+			"flammable": false,
+			"r": 20,
+			"g": 40,
+			"b": 100
+		},
+		"oil": {
+			"solid": true,
+			"physics": true,
+			"liquid": true,
+			"density": 44,
+			"vmax": 4,
+			"life": 0,
+			"flammable": true,
+			"r": 120,
+			"g": 60,
+			"b": 20
+		},
+		"fire": {
+			"solid": true,
+			"physics": true,
+			"liquid": false,
+			"density": 1,
+			"vmax": -3,
+			"life": 15,
+			"flammable": true,
+			"r": 255,
+			"g": 110,
+			"b": 15
+		},
+		"wall": {
+			"solid": true,
+			"physics": false,
+			"liquid": false,
+			"density": 100,
+			"vmax": 0,
+			"life": 0,
+			"flammable": false,
+			"r": 80,
+			"g": 80,
+			"b": 80
+		}
+	}
+}
