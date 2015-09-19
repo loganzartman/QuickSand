@@ -27,7 +27,7 @@
 			"physics": true,
 			"liquid": false,
 			"density": 76,
-			"vmax": 5,
+			"vmax": 4,
 			"life": 0,
 			"flammable": false,
 			"r": 200,
@@ -82,14 +82,26 @@
 			"g": 60,
 			"b": 20
 		},
+		"goo": {
+			"solid": true,
+			"physics": true,
+			"liquid": false,
+			"density": 44,
+			"vmax": 1,
+			"life": 0,
+			"flammable": true,
+			"r": 30,
+			"g": 180,
+			"b": 20
+		},
 		"fire": {
 			"solid": true,
 			"physics": true,
 			"liquid": false,
 			"density": 1,
-			"vmax": -3,
+			"vmax": 2,
 			"life": 15,
-			"flammable": true,
+			"flammable": false,
 			"r": 255,
 			"g": 110,
 			"b": 15

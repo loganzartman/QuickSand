@@ -1,13 +1,13 @@
 var Universe = {
-	w: 600,
-	h: 400,
+	w: 500,
+	h: 300,
 	time: 0,
 	particles: null,
 	temp: null,
 	typeMap: {},
 	typeArr: null,
-	selected: "water",
-	createSize: 16,
+	selected: "sand",
+	createSize: 8,
 
 	//when adding/removing baked-in props, make sure to update Universe.setPosType
 	propMap: {
@@ -75,7 +75,7 @@ var Universe = {
 			//make particles
 			Util.applyLine(Mouse.lx, Mouse.ly, Mouse.x+1, Mouse.y+1, function(x,y){
 				Universe.quickfill(x-Universe.createSize*0.5, y-Universe.createSize*0.5, Universe.createSize, Universe.createSize, Universe.selected, Universe.selected==="sand"||Universe.selected==="silt"?colors:undefined);
-			}, 4);
+			}, 2);
 		}
 		Mouse.lx = Mouse.x;
 		Mouse.ly = Mouse.y;
@@ -183,6 +183,7 @@ var Universe = {
 			flipflop = Universe.w-1-flipflop;
 		}
 		Display.update();
+		requestAnimationFrame(Universe.step);
 	},
 
 	index: function(x, y) {

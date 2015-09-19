@@ -43,7 +43,7 @@ var Game = {
 		dmode.selectedIndex = Display.modes[0];
 		Display.container.appendChild(dmode);
 
-		setInterval(Universe.step, 1000/60);
+		requestAnimationFrame(Universe.step);
 
 		Display.canvas.addEventListener("mousedown", function(event){
 			event.preventDefault();
