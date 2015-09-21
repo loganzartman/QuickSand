@@ -45,12 +45,12 @@ var Display = {
 		var idx, type;
 		var data = Display.data;
 		for (var i=Universe.w*Universe.h-1; i>=0; i--) {
-			idx = i*Universe.nProperties;
+			idx = i*Universe.neProperties;
 
 			if (Display.mode === "sleeping" || Display.mode === "normal") {
-				data[i*4+0] = Universe.particles[idx + Universe.propMap["r"]];
-				data[i*4+1] = Universe.particles[idx + Universe.propMap["g"]];
-				data[i*4+2] = Universe.particles[idx + Universe.propMap["b"]];
+				data[i*4+0] = Universe.particles[idx + Universe.ePropMap["r"]];
+				data[i*4+1] = Universe.particles[idx + Universe.ePropMap["g"]];
+				data[i*4+2] = Universe.particles[idx + Universe.ePropMap["b"]];
 				data[i*4+3] = 255;
 
 				if (Display.mode === "sleeping" && Universe.isSleeping(idx)) {

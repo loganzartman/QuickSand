@@ -3,6 +3,7 @@ var Universe = {
 	h: 300,
 	time: 0,
 	particles: null,
+	iProps: null,
 	temp: null,
 	typeMap: {},
 	typeArr: null,
@@ -10,24 +11,28 @@ var Universe = {
 	createSize: 8,
 
 	//when adding/removing baked-in props, make sure to update Universe.setPosType
-	propMap: {
+	ePropMap: {
 		"type": 0,
 		"moved": 1,
 		"sleeping": 2,
 		"vel": 3
 	},
-	propArr: null,
-	nProperties: 0,
+	ePropArr: null,
+	iPropMap: {},
+	iPropArr: null,
+	niProperties: 0,
+	neProperties: 0,
 	nHardProps: 4,
 
 	init: function() {
-		Universe.nProperties = (Game.particleData["properties"].length + Universe.nHardProps); //need type and moved also
+		Universe.niProperties = (Game.particleData["iproperties"].length); //INTENSIVE properties; common to all particles of a type
+		Universe.neProperties = (Game.particleData["eproperties"].length + Universe.nHardProps); //EXTENSIVE properties; set on a per-particle basis
 
 		//construct particles array
-		Universe.particles = new Uint8Array(Universe.w*Universe.h*(Universe.nProperties));
-		Universe.temp = new Uint8Array(Universe.nProperties);
+		Universe.particles = new Uint8Array(Universe.w*Universe.h*(Universe.neProperties));
+		Universe.temp = new Uint8Array(Universe.neProperties);
 
-		//prepare type->int map
+		//prepare type string<->int maps
 		var typeIndex = 0;
 		for (var type in Game.particleData["types"]) {
 			if (Game.particleData["types"].hasOwnProperty(type)) {
@@ -38,12 +43,25 @@ var Universe = {
 		}
 		Universe.typeArr = Object.keys(Universe.typeMap);
 
-		//prepare prop->int map
-		for (var i=0; i<Game.particleData["properties"].length; i++) {
-			Universe.propMap[Game.particleData["properties"][i]] = i + Universe.nHardProps;
+		//prepare prop string<->int maps
+		for (var i=0; i<Game.particleData["eproperties"].length; i++) {
+			Universe.ePropMap[Game.particleData["eproperties"][i]] = i + Universe.nHardProps;
 		}
-		Universe.propArr = Object.keys(Universe.propMap);
+		Universe.ePropArr = Object.keys(Universe.ePropMap);
+		for (var i=0; i<Game.particleData["iproperties"].length; i++) {
+			Universe.iPropMap[Game.particleData["iproperties"][i]] = i;
+		}
+		Universe.iPropArr = Object.keys(Universe.iPropMap);
 
+		//prepare intensive properties LUT
+		Universe.iProps = new Uint8Array(Universe.niProperties*Universe.typeArr.length);
+		for (var i=0; i<Universe.typeArr.length-1; i++) {
+			for (var j=0,k=Universe.iPropArr.length; j<k; j++) {
+				Universe.iProps[i*k + j] = Game.particleData["types"][Universe.typeArr[i]][Universe.iPropArr[j]];
+			}
+		}
+
+		//fill particles array with air
 		Universe.clearAll();
 	},
 
@@ -72,50 +90,64 @@ var Universe = {
 				"b": rgb[2]
 			};
 
-			//make particles
+			//make particles at mouse
 			Util.applyLine(Mouse.lx, Mouse.ly, Mouse.x+1, Mouse.y+1, function(x,y){
-				Universe.quickfill(x-Universe.createSize*0.5, y-Universe.createSize*0.5, Universe.createSize, Universe.createSize, Universe.selected, Universe.selected==="sand"||Universe.selected==="silt"?colors:undefined);
+				Universe.quickfill(
+					x-Universe.createSize*0.5, 
+					y-Universe.createSize*0.5, 
+					Universe.createSize, 
+					Universe.createSize, 
+					Universe.selected, 
+					Universe.selected==="sand"||Universe.selected==="silt"?colors:undefined
+				);
 			}, 2);
 		}
+
+		//store mouse position as previous position
 		Mouse.lx = Mouse.x;
 		Mouse.ly = Mouse.y;
 
 		//mark all particles as not updated
 		for (var i=Universe.w*Universe.h-1; i>=0; i--) {
-			Universe.particles[i*Universe.nProperties+Universe.propMap["moved"]] = 0;
+			Universe.particles[i*Universe.neProperties+Universe.ePropMap["moved"]] = 0;
 		}
 
 		//update all particles
-		var idx, flipflop = 0;
+		var idx, flipflop = 0; //flipflop is used to alternate direction of looping to prevent simulation artifacts
 		for (var y=Universe.h-1; y>=0; y--) {
 			for (var bx=0; bx<Universe.w; bx++) {
 				var x = Math.abs(flipflop - bx);
 				idx = Universe.index(x,y);
+				var type = Universe.getType(idx);
 
-				//life
-				if (Universe.particles[idx + Universe.propMap["life"]] > 0) {
-					if (--Universe.particles[idx + Universe.propMap["life"]] <= 0) {
+				//count life and kill particle if life == 0
+				if (Universe.particles[idx + Universe.ePropMap["life"]] > 0) {
+					if (--Universe.particles[idx + Universe.ePropMap["life"]] <= 0) {
 						Universe.setPosType(x, y, "air");
 						continue;
 					}
 				}
 
 				//check to make sure particle hasn't been updated yet
-				if (Universe.particles[idx+Universe.propMap["moved"]] === 0) {
+				if (Universe.getProp(false, "moved", idx) === 0) {
 					//mark the particle as updated
 					// Universe.particles[idx+Universe.propMap["moved"]] = 1;
 
 					//simulate physics-enabled particles
-					if (Universe.particles[idx+Universe.propMap["physics"]] === 1 && !Universe.isSleeping(idx)) {
-						var nx = x, ny = y; //when particles move more than once, we need to store position
+					if (Universe.hasPhysics(type) && !Universe.isSleeping(idx)) {
+						var nx = x, ny = y; //when particles move more than once, we need to keep track of new position
+						
+						//obtain and increase particle velocity (gravity)
 						var vel = Universe.getVel(idx);
-						Universe.setVel(idx, vel=Math.min(signedbyte(Universe.particles[idx+Universe.propMap["vmax"]]),vel+1));
+						Universe.setVel(idx, vel=Math.min(Universe.getVmax(type),vel+1));
+
+						//perform movement
 						for (var z=Math.abs(Universe.getVel(idx)); z>=0; z--) {
 							idx = Universe.index(nx,ny);
 
 							//propagate fire
 							if (Universe.particles[idx] === Universe.typeMap["fire"]) {
-								if (Universe.particles[idx + Universe.propMap["density"]] !== 1) {
+								if (Universe.getDensity(type) !== 1) {
 									Universe.setPosType(nx, ny, "fire");
 									break;
 								}
@@ -124,7 +156,7 @@ var Universe = {
 										cl = Universe.index(x-1, y),
 										cr = Universe.index(x+1, y),
 										dc = Universe.index(x, y+1),
-										flammable = Universe.propMap["flammable"],
+										flammable = Universe.ePropMap["flammable"],
 										fire = Universe.typeMap["fire"];
 									if (Universe.particles[uc + flammable] === 1) Universe.particles[uc] = fire;
 									if (Universe.particles[cl + flammable] === 1) Universe.particles[cl] = fire;
@@ -152,7 +184,7 @@ var Universe = {
 									nx += dir;
 									ny += vdir;
 								}
-								else if (Universe.isLiquid(idx)) {
+								else if (Universe.isLiquid(type)) {
 									//liquid particles move randomly
 									if (Universe.tryMove(nx, ny, nx-dir, ny)) {
 										nx -= dir;
@@ -173,14 +205,14 @@ var Universe = {
 								// 	Universe.setPosType(nx, ny, "air");
 								// }
 								Universe.setVel(idx, 0);
-								if (Universe.particles[idx+Universe.propMap["solid"]] === 1) Universe.wake(idx);
+								if (Universe.isSolid(type)) Universe.wake(idx);
 							}
-							if (Universe.particles[idx+Universe.propMap["solid"]] === 0) Universe.sleep(idx);
+							if (!Universe.isSolid(type)) Universe.sleep(idx);
 						}
 					}
 				}
 			}
-			flipflop = Universe.w-1-flipflop;
+			flipflop = Universe.w-1-flipflop; //alternates x looping direction
 		}
 		Display.update();
 		requestAnimationFrame(Universe.step);
@@ -189,36 +221,58 @@ var Universe = {
 	index: function(x, y) {
 		x = Math.max(0, Math.min(Universe.w-1, x));
 		y = Math.max(0, Math.min(Universe.h-1, y));
-		return ((y*Universe.w)+x)*Universe.nProperties;
+		return ((y*Universe.w)+x)*Universe.neProperties;
 	},
 
-	isLiquid: function(idx) {
-		return Universe.particles[idx + Universe.propMap["liquid"]] === 1;
+	getProp: function(isIntensive, name, idx) {
+		if (isIntensive)
+			return Universe.iProps[idx*Universe.niProperties + Universe.iPropMap[name]];
+		return Universe.particles[idx + Universe.ePropMap[name]];
+	},
+
+	getType: function(idx) {
+		return Universe.particles[idx + Universe.ePropMap["type"]];
+	},
+
+	getDensity: function(type) {
+		return Universe.iProps[type*Universe.niProperties + Universe.iPropMap["density"]];
+	},
+
+	isLiquid: function(type) {
+		return Universe.iProps[type*Universe.niProperties + Universe.iPropMap["liquid"]] === 1;
 	},
 
 	isSleeping: function(idx) {
-		return Universe.particles[idx + Universe.propMap["sleeping"]] === 1;
+		return Universe.particles[idx + Universe.ePropMap["sleeping"]];
+	},
+
+	isSolid: function(type) {
+		return Universe.iProps[type*Universe.niProperties + Universe.iPropMap["solid"]] === 1;
+	},
+
+	hasPhysics: function(type) {
+		return Universe.iProps[type*Universe.niProperties + Universe.iPropMap["physics"]] === 1;
 	},
 
 	setVel: function(idx, val) {
-		return Universe.particles[idx + Universe.propMap["vel"]] = val;
+		return Universe.particles[idx + Universe.ePropMap["vel"]] = val;
 	},
 
 	getVel: function(idx) {
-		return Universe.particles[idx + Universe.propMap["vel"]];
+		return Universe.particles[idx + Universe.ePropMap["vel"]];
+	},
+
+	getVmax: function(type) {
+		return signedbyte(Universe.iProps[type*Universe.niProperties + Universe.iPropMap["vmax"]]);
 	},
 
 	clearAll: function() {
-		//clear particles array
 		Universe.quickfill(0,0,Universe.w,Universe.h,"air");
-		// for (var i=0; i<Universe.w*Universe.h; i++) {
-		// 	Universe.setPosType(i%Universe.w, ~~(i/Universe.w), "air");
-		// }
 	},
 
 	quickfill: function(x, y, w, h, type, props) {
 		Universe.setPosType(x,y,type,props);
-		var i, idx = Universe.index(x,y), np = Universe.nProperties-1;
+		var i, idx = Universe.index(x,y), np = Universe.neProperties-1;
 		for (i=np; i>=0; i--) {
 			Universe.temp[i] = Universe.particles[idx+i];
 		}
@@ -250,7 +304,7 @@ var Universe = {
 			if (props.hasOwnProperty(prop)) {
 				properties[prop] = props[prop];
 			}
-			else if (defaults.hasOwnProperty(prop)) {
+			else if (defaults.hasOwnProperty(prop) && Universe.ePropMap.hasOwnProperty(prop)) {
 				properties[prop] = defaults[prop];
 			}
 		}
@@ -261,7 +315,7 @@ var Universe = {
 		var i0 = Universe.index(x,y);
 		Universe.wakeAround(x, y);
 		var pkeys = Object.keys(props);
-		for (var i=Universe.nProperties-1; i>=0; i--) {
+		for (var i=Universe.neProperties-1; i>=0; i--) {
 			var val = typeof pkeys[i] === "undefined" ? 0 : pkeys[i];
 			Universe.particles[i0 + i] = Number(props[val]);
 		}
@@ -270,10 +324,12 @@ var Universe = {
 	tryMove: function(x1, y1, x2, y2) {
 		var i0 = Universe.index(x1, y1),
 			i1 = Universe.index(x2, y2);
-		var d0 = Universe.particles[i0 + Universe.propMap["density"]],
-			d1 = Universe.particles[i1 + Universe.propMap["density"]];
+		var t0 = Universe.getType(i0),
+			t1 = Universe.getType(i1);
+		var d0 = Universe.getDensity(t0),
+			d1 = Universe.getDensity(t1);
 
-		if (Universe.particles[i1 + Universe.propMap["solid"]] === 1) {
+		if (Universe.isSolid(t1)) {
 			if (d1 >= d0) {
 				Universe.sleep(i0);
 				return false;
@@ -285,21 +341,21 @@ var Universe = {
 
 		Universe.wakeAround(x1, y1);
 		Universe.wakeAround(x2, y2);
-		Universe.particles[i0 + Universe.propMap["moved"]] = 1;
+		Universe.particles[i0 + Universe.ePropMap["moved"]] = 1;
 		Universe.swap(i0, i1);
 		return true;
 	},
 
 	sleep: function(idx) {
-		Universe.particles[idx + Universe.propMap["sleeping"]] = 1;
+		Universe.particles[idx + Universe.ePropMap["sleeping"]] = 1;
 	},
 
 	wake: function(idx) {
-		Universe.particles[idx + Universe.propMap["sleeping"]] = 0;
+		Universe.particles[idx + Universe.ePropMap["sleeping"]] = 0;
 	},
 
 	wakeAround: function(x, y) {
-		Universe.setNearby(x, y, Universe.propMap["sleeping"], 0);
+		Universe.setNearby(x, y, Universe.ePropMap["sleeping"], 0);
 	},
 
 	setNearby: function(x, y, propOffset, val) {
@@ -322,7 +378,7 @@ var Universe = {
 	},
 
 	swap: function(i0, i1) {
-		var i = Universe.nProperties;
+		var i = Universe.neProperties;
 		while (i--) {
 			Universe.temp[i] = Universe.particles[i0+i];
 			Universe.particles[i0+i] = Universe.particles[i1+i];

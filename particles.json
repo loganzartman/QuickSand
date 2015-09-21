@@ -1,10 +1,12 @@
 {
-	"properties": [
+	"iproperties": [
 		"solid",
 		"physics",
 		"liquid",
 		"density",
-		"vmax",
+		"vmax"
+	],
+	"eproperties": [
 		"life",
 		"flammable",
 		"r", "g", "b"
@@ -33,18 +35,6 @@
 			"r": 200,
 			"g": 160,
 			"b": 50
-		},
-		"doot!": {
-			"solid": true,
-			"physics": true,
-			"liquid": false,
-			"density": 100,
-			"vmax": 10,
-			"life": 0,
-			"flammable": false,
-			"r": 0,
-			"g": 0,
-			"b": 0
 		},
 		"silt": {
 			"solid": true,
