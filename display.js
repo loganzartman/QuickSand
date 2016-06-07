@@ -60,9 +60,10 @@ var Display = {
 				}
 			}
 			else if (Display.mode === "density") {
-				data[i*4+0] = ~~(255 * (Universe.particles[idx + Universe.propMap["density"]] * 0.01));
+				var density = Universe.getDensity(Universe.particles[idx]);
+				data[i*4+0] = ~~(255 * (density * 0.01));
 				data[i*4+1] = 0;
-				data[i*4+2] = 255 - ~~(255 * (Universe.particles[idx + Universe.propMap["density"]] * 0.01));
+				data[i*4+2] = 255 - ~~(255 * (density * 0.01));
 				data[i*4+3] = 255;
 			}
 		}
@@ -85,6 +86,7 @@ var Display = {
 			Display.ctx.putImageData(Display.imgdata, 0, 0);
 		}
 
+		Display.octx.globalAlpha = 0.5;
 		Display.octx.drawImage(Display.buffer, 0, 0, Display.scale*Display.buffer.width, Display.scale*Display.buffer.height);
 	}
 };

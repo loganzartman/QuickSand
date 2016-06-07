@@ -4,7 +4,8 @@
 		"physics",
 		"liquid",
 		"density",
-		"vmax"
+		"vmax",
+		"turbulence"
 	],
 	"eproperties": [
 		"life",
@@ -18,18 +19,33 @@
 			"liquid": false,
 			"density": 0,
 			"vmax": 0,
+			"turbulence": 0,
 			"flammable": false,
 			"life": 0,
-			"r": 255,
-			"g": 255,
-			"b": 255
+			"r": 222,
+			"g": 219,
+			"b": 217
+		},
+		"wall": {
+			"solid": true,
+			"physics": false,
+			"liquid": false,
+			"density": 255,
+			"vmax": 0,
+			"turbulence": 0,
+			"life": 0,
+			"flammable": false,
+			"r": 80,
+			"g": 80,
+			"b": 80
 		},
 		"sand": {
 			"solid": true,
 			"physics": true,
 			"liquid": false,
 			"density": 76,
-			"vmax": 4,
+			"vmax": 5,
+			"turbulence": 10,
 			"life": 0,
 			"flammable": false,
 			"r": 200,
@@ -41,18 +57,33 @@
 			"physics": true,
 			"liquid": false,
 			"density": 64,
-			"vmax": 3,
+			"vmax": 4,
+			"turbulence": 14,
 			"life": 0,
 			"flammable": false,
 			"r": 250,
 			"g": 210,
 			"b": 100
 		},
+		"dust": {
+			"solid": true,
+			"physics": true,
+			"liquid": false,
+			"density": 56,
+			"vmax": 3,
+			"turbulence": 120,
+			"life": 0,
+			"flammable": false,
+			"r": 220,
+			"g": 180,
+			"b": 70
+		},
 		"water": {
 			"solid": true,
 			"physics": true,
 			"liquid": true,
 			"density": 50,
+			"turbulence": 40,
 			"vmax": 5,
 			"life": 0,
 			"flammable": false,
@@ -66,6 +97,7 @@
 			"liquid": true,
 			"density": 44,
 			"vmax": 4,
+			"turbulence": 40,
 			"life": 0,
 			"flammable": true,
 			"r": 120,
@@ -78,35 +110,30 @@
 			"liquid": false,
 			"density": 44,
 			"vmax": 1,
+			"turbulence": 0,
 			"life": 0,
 			"flammable": true,
 			"r": 30,
 			"g": 180,
 			"b": 20
 		},
+		"null": {
+
+		}
+	},
+	"unused": {
 		"fire": {
 			"solid": true,
 			"physics": true,
 			"liquid": false,
 			"density": 1,
 			"vmax": 2,
+			"turbulence": 100,
 			"life": 15,
 			"flammable": false,
 			"r": 255,
 			"g": 110,
 			"b": 15
-		},
-		"wall": {
-			"solid": true,
-			"physics": false,
-			"liquid": false,
-			"density": 100,
-			"vmax": 0,
-			"life": 0,
-			"flammable": false,
-			"r": 80,
-			"g": 80,
-			"b": 80
 		}
 	}
 }

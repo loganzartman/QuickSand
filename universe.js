@@ -1,5 +1,5 @@
 var Universe = {
-	w: 500,
+	w: 400,
 	h: 300,
 	time: 0,
 	particles: null,
@@ -8,7 +8,7 @@ var Universe = {
 	typeMap: {},
 	typeArr: null,
 	selected: "sand",
-	createSize: 8,
+	createSize: 6,
 
 	//when adding/removing baked-in props, make sure to update Universe.setPosType
 	ePropMap: {
@@ -169,7 +169,7 @@ var Universe = {
 							var fell = 1.0;
 							var vdir = vel < 0 ? -1 : 1;
 							if (Universe.tryMove(nx, ny, nx, ny+vdir)) {
-								fell = 0.05;
+								fell = Universe.getProp(true, "turbulence", type) / 200;
 								ny += vdir;
 							}
 
@@ -330,7 +330,7 @@ var Universe = {
 			d1 = Universe.getDensity(t1);
 
 		if (Universe.isSolid(t1)) {
-			if (d1 >= d0) {
+			if (!Universe.isLiquid(t1) || d1 >= d0) {
 				Universe.sleep(i0);
 				return false;
 			}
